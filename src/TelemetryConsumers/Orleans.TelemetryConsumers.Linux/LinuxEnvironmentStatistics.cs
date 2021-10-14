@@ -173,6 +173,7 @@ namespace Orleans.Statistics
 
         private long _prevIdleTime;
         private long _prevTotalTime;
+        private DateTime _prevRunTime;
 
         private async Task UpdateCpuUsage(int i)
         {
@@ -227,17 +228,18 @@ namespace Orleans.Statistics
                 if (i > 0)
                 {
                     var deltaTotalTime = cpuUsageNs - _prevTotalTime;
-
-                    // 1 ns = 1000us
-                    // 1 s = 1000000us
-                    // Total cpu time quota: cfs_quota_us * (MONITOR_PERIOD / cfs_period_us)
-                    var currentCpuUsage = ((deltaTotalTime * 1_000) / (cpuUsageQuotaUs * ((float)MONITOR_PERIOD.Seconds * 1_000_000) / cpuUsagePeriodUs)) * 100f;
+                    var timePeriod = DateTime.UtcNow - _prevRunTime;
+                    // 1 ms = 1000us
+                    // 1 us = 1000ns
+                    // Total cpu time quota in us: cfs_quota_us * (MONITOR_PERIOD * 1000 / cfs_period_us)
+                    var currentCpuUsage = ((deltaTotalTime / 1_000) / (cpuUsageQuotaUs * ((float)timePeriod.Milliseconds * 1_000) / cpuUsagePeriodUs)) * 100f;
 
                     var previousCpuUsage = CpuUsage ?? 0f;
                     CpuUsage = (previousCpuUsage + 2 * currentCpuUsage) / 3;
                 }
 
                 _prevTotalTime = cpuUsageNs;
+                _prevRunTime = DateTime.UtcNow;
             }
             else
             {
