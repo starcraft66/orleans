@@ -19,11 +19,19 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '2.1.x'
+        source-url: https://nuget.pkg.github.com/starcraft66/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     - name: Setup .NET Core 3.1
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '3.1.x'
+        source-url: https://nuget.pkg.github.com/starcraft66/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
     - name: Build
-      run: dotnet build
+      run: dotnet pack --configuration Release --version-prefix 3.5.1
+    - name: Push generated package to GitHub registry
+      run: dotnet nuget push ./Artifacts/Release/*.nupkg --skip-duplicate --no-symbols
