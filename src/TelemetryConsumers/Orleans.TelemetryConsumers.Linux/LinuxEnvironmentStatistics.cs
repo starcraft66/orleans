@@ -39,7 +39,7 @@ namespace Orleans.Statistics
 
         private const string MEMINFO_FILEPATH = "/proc/meminfo";
         private const string CPUSTAT_FILEPATH = "/proc/stat";
-        private const string CGROUP_V1_FILEPATH = "/sys/fs/cgroup";
+        private const string CGROUP_PATH = "/sys/fs/cgroup";
         private const string CGROUP_V1_USED_MEM_FILEPATH = "/sys/fs/cgroup/memory/memory.usage_in_bytes";
         private const string CGROUP_V1_TOTAL_MEM_FILEPATH = "/sys/fs/cgroup/memory/memory.limit_in_bytes";
         private const string CGROUP_V1_CFS_QUOTA_FILEPATH = "/sys/fs/cgroup/cpuacct/cpu.cfs_quota_us";
@@ -50,7 +50,6 @@ namespace Orleans.Statistics
         {
             MEMINFO_FILEPATH,
             CPUSTAT_FILEPATH,
-            CGROUP_V1_FILEPATH,
             CGROUP_V1_USED_MEM_FILEPATH,
             CGROUP_V1_TOTAL_MEM_FILEPATH,
             CGROUP_V1_CFS_QUOTA_FILEPATH,
@@ -58,9 +57,28 @@ namespace Orleans.Statistics
             CGROUP_V1_CPU_USAGE_FILEPATH
         };
 
-        public LinuxEnvironmentStatistics(ILoggerFactory loggerFactory)
+        private enum CGroupVersion { None, CGroup1, CGroup2 };
+        private static CGroupVersion FindCGroupVersion()
+        {
+            try
+            {
+                return new DriveInfo(CGROUP_PATH).DriveFormat switch
+                {
+                    "cgroup2fs" => CGroupVersion.CGroup2,
+                    "tmpfs" => CGroupVersion.CGroup1,
+                    _ => CGroupVersion.None,
+                };
+            }
+            catch (Exception ex) when (ex is DriveNotFoundException || ex is ArgumentException)
+            {
+                return CGroupVersion.None;
+            }
+        }
+
+        public LinuxEnvironmentStatistics(ILoggerFactory loggerFactory, bool constrainToCGroup)
         {
             _logger = loggerFactory.CreateLogger<LinuxEnvironmentStatistics>();
+            InCGroup = constrainToCGroup;
         }
 
         public void Dispose()
@@ -85,7 +103,7 @@ namespace Orleans.Statistics
         {
             _logger.LogTrace($"Starting {nameof(LinuxEnvironmentStatistics)}");
 
-            if (Directory.Exists(CGROUP_V1_FILEPATH))
+            if (FindCGroupVersion() != CGroupVersion.None)
             {
                 _logger.LogTrace($"Process is running inside a CGroup, {nameof(LinuxEnvironmentStatistics)} " +
                                  $"using the CGroup's limits instead of system ones");
