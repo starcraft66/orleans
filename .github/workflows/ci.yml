@@ -34,4 +34,6 @@ jobs:
     - name: Build
       run: dotnet pack --configuration Release /p:VersionPrefix=3.5.1
     - name: Push generated package to GitHub registry
-      run: dotnet nuget push ./Artifacts/Release/*.nupkg --skip-duplicate --no-symbols true
+      run: dotnet nuget push ./Artifacts/Release/*.nupkg -k $NUGET_AUTH_TOKEN --skip-duplicate --no-symbols true
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
