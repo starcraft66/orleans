@@ -36,4 +36,4 @@ jobs:
     - name: Push generated package to GitHub registry
       run: |
         dotnet nuget add source --username starcraft66 --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/starcraft66/index.json"
-        dotnet nuget push ./Artifacts/Release/*.nupkg --source github --skip-duplicate --no-symbols true
+        dotnet nuget push ./Artifacts/Release/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source github --skip-duplicate --no-symbols true
