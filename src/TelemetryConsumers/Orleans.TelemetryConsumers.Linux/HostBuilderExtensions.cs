@@ -45,7 +45,7 @@ namespace Orleans.Statistics
         /// <summary>
         /// Registers <see cref="LinuxEnvironmentStatistics"/> services.
         /// </summary>
-        internal static void RegisterServices<TLifecycleObservable>(IServiceCollection services) where TLifecycleObservable : ILifecycleObservable
+        internal static void RegisterServices<TLifecycleObservable>(IServiceCollection services, bool useCGroupLimits = false) where TLifecycleObservable : ILifecycleObservable
         {
             var isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
             if (!isLinux)
@@ -57,7 +57,11 @@ namespace Orleans.Statistics
             }
 
             services.AddTransient<IConfigurationValidator, LinuxEnvironmentStatisticsValidator>();
-            services.AddSingleton<LinuxEnvironmentStatistics>();
+            services.AddSingleton<LinuxEnvironmentStatistics>(x =>
+            {
+                var logger = x.GetRequiredService<ILoggerFactory>();
+                return new LinuxEnvironmentStatistics(logger, useCGroupLimits);
+            });
             services.AddFromExisting<IHostEnvironmentStatistics, LinuxEnvironmentStatistics>();
             services.AddFromExisting(typeof(ILifecycleParticipant<TLifecycleObservable>), typeof(LinuxEnvironmentStatistics));
         }
@@ -68,17 +72,19 @@ namespace Orleans.Statistics
         /// <summary>
         /// Use Linux host environment statistics
         /// </summary>
-        public static ISiloHostBuilder UseLinuxEnvironmentStatistics(this ISiloHostBuilder builder)
+        public static ISiloHostBuilder UseLinuxEnvironmentStatistics(this ISiloHostBuilder builder, bool useCGroupLimits = false)
         {
-            return builder.ConfigureServices(LinuxEnvironmentStatisticsServices.RegisterServices<ISiloLifecycle>);
+            return builder.ConfigureServices(services =>
+                LinuxEnvironmentStatisticsServices.RegisterServices<ISiloLifecycle>(services, useCGroupLimits));
         }
 
         /// <summary>
         /// Use Linux host environment statistics
         /// </summary>
-        public static ISiloBuilder UseLinuxEnvironmentStatistics(this ISiloBuilder builder)
+        public static ISiloBuilder UseLinuxEnvironmentStatistics(this ISiloBuilder builder, bool useCGroupLimits = false)
         {
-            return builder.ConfigureServices(LinuxEnvironmentStatisticsServices.RegisterServices<ISiloLifecycle>);
+            return builder.ConfigureServices(collection =>
+                LinuxEnvironmentStatisticsServices.RegisterServices<ISiloLifecycle>(collection, useCGroupLimits));
         }
     }
 

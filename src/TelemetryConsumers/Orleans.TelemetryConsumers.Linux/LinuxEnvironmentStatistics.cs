@@ -103,11 +103,16 @@ namespace Orleans.Statistics
         {
             _logger.LogTrace($"Starting {nameof(LinuxEnvironmentStatistics)}");
 
-            if (FindCGroupVersion() != CGroupVersion.None)
+            // if (FindCGroupVersion() != CGroupVersion.None)
+            // {
+            //     _logger.LogTrace($"Process is running inside a CGroup, {nameof(LinuxEnvironmentStatistics)} " +
+            //                      $"using the CGroup's limits instead of system ones");
+            //    InCGroup = true;
+            // }
+            if (InCGroup)
             {
-                _logger.LogTrace($"Process is running inside a CGroup, {nameof(LinuxEnvironmentStatistics)} " +
-                                 $"using the CGroup's limits instead of system ones");
-               InCGroup = true;
+                this._logger.LogInformation($"{nameof(LinuxEnvironmentStatistics)} collecting CGroup-aware " +
+                                            $"statistics.");
             }
 
             _cts = new CancellationTokenSource();
