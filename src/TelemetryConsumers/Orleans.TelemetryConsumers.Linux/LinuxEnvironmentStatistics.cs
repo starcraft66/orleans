@@ -206,47 +206,41 @@ namespace Orleans.Statistics
                 var cpuUsageQuota = await ReadLineAsync(CGROUP_V1_CFS_QUOTA_FILEPATH);
                 var cpuUsagePeriod = await ReadLineAsync(CGROUP_V1_CFS_PERIOD_FILEPATH);
 
-                if (string.IsNullOrWhiteSpace(cpuUsageLine))
+                if (string.IsNullOrWhiteSpace(cpuUsageLine.Trim()))
                 {
                     _logger.LogWarning($"Couldn't read line from '{CGROUP_V1_CPU_USAGE_FILEPATH}'");
                     return;
                 }
 
-                if (long.TryParse(cpuUsageLine, out _))
+                if (!long.TryParse(cpuUsageLine.Trim(), out var cpuUsageNs))
                 {
                     _logger.LogWarning($"Failed to parse '{CGROUP_V1_CPU_USAGE_FILEPATH}' output correctly. Line: {cpuUsageLine}");
                     return;
                 }
 
-                var cpuUsageNs = long.Parse(cpuUsageLine);
-
-                if (string.IsNullOrWhiteSpace(cpuUsageQuota))
+                if (string.IsNullOrWhiteSpace(cpuUsageQuota.Trim()))
                 {
                     _logger.LogWarning($"Couldn't read line from '{CGROUP_V1_CFS_QUOTA_FILEPATH}'");
                     return;
                 }
 
-                if (long.TryParse(cpuUsageQuota, out _))
+                if (!long.TryParse(cpuUsageQuota.Trim(), out var cpuUsageQuotaUs))
                 {
-                    _logger.LogWarning($"Failed to parse '{CGROUP_V1_CFS_QUOTA_FILEPATH}' output correctly. Line: {cpuUsageLine}");
+                    _logger.LogWarning($"Failed to parse '{CGROUP_V1_CFS_QUOTA_FILEPATH}' output correctly. Line: {cpuUsageQuota}");
                     return;
                 }
 
-                var cpuUsageQuotaUs = long.Parse(cpuUsageQuota);
-
-                if (string.IsNullOrWhiteSpace(cpuUsagePeriod))
+                if (string.IsNullOrWhiteSpace(cpuUsagePeriod.Trim()))
                 {
                     _logger.LogWarning($"Couldn't read line from '{CGROUP_V1_CFS_PERIOD_FILEPATH}'");
                     return;
                 }
 
-                if (long.TryParse(cpuUsagePeriod, out _))
+                if (!long.TryParse(cpuUsagePeriod.Trim(), out var cpuUsagePeriodUs))
                 {
-                    _logger.LogWarning($"Failed to parse '{CGROUP_V1_CFS_PERIOD_FILEPATH}' output correctly. Line: {cpuUsageLine}");
+                    _logger.LogWarning($"Failed to parse '{CGROUP_V1_CFS_PERIOD_FILEPATH}' output correctly. Line: {cpuUsagePeriod}");
                     return;
                 }
-
-                var cpuUsagePeriodUs = long.Parse(cpuUsagePeriod);
 
                 if (i > 0)
                 {
@@ -420,7 +414,7 @@ namespace Orleans.Statistics
                 var line = await r.ReadLineAsync();
                 if (line is not null)
                 {
-                    return await r.ReadLineAsync();
+                    return line;
                 }
             }
 
