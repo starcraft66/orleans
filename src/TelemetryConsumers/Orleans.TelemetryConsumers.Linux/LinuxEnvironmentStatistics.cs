@@ -42,8 +42,8 @@ namespace Orleans.Statistics
         private const string CGROUP_PATH = "/sys/fs/cgroup";
         private const string CGROUP_V1_USED_MEM_FILEPATH = "/sys/fs/cgroup/memory/memory.usage_in_bytes";
         private const string CGROUP_V1_TOTAL_MEM_FILEPATH = "/sys/fs/cgroup/memory/memory.limit_in_bytes";
-        private const string CGROUP_V1_CFS_QUOTA_FILEPATH = "/sys/fs/cgroup/cpuacct/cpu.cfs_quota_us";
-        private const string CGROUP_V1_CFS_PERIOD_FILEPATH = "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us";
+        private const string CGROUP_V1_CFS_QUOTA_FILEPATH = "/sys/fs/cgroup/cpu/cpu.cfs_quota_us";
+        private const string CGROUP_V1_CFS_PERIOD_FILEPATH = "/sys/fs/cgroup/cpu/cpu.cfs_period_us";
         private const string CGROUP_V1_CPU_USAGE_FILEPATH = "/sys/fs/cgroup/cpuacct/cpuacct.usage";
 
         internal static readonly string[] RequiredFiles = new[]
