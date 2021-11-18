@@ -109,7 +109,10 @@ namespace Orleans.Configuration
         /// <summary>
         /// The period of time between analyzing currently executing activation workloads.
         /// </summary>
-        public TimeSpan GrainWorkloadAnalysisPeriod { get; set; } = TimeSpan.FromSeconds(5);
+        /// <remarks>
+        /// Note: A negative value disables periodic analysis.
+        /// </remarks>
+        public TimeSpan GrainWorkloadAnalysisPeriod { get; set; } = TimeSpan.FromSeconds(15);
 
         /// <summary>
         /// The period after which a currently executing request is deemed to be slow.
@@ -120,5 +123,11 @@ namespace Orleans.Configuration
         /// The period after which an enqueued request is deemed to be delayed.
         /// </summary>
         public TimeSpan RequestQueueDelayWarningTime { get; set; } = TimeSpan.FromSeconds(10);
+
+        /// <summary>
+        /// Time to wait for all queued message sent to OutboundMessageQueue before MessageCenter stop and OutboundMessageQueue stop.
+        /// </summary>
+        public TimeSpan WaitForMessageToBeQueuedForOutboundTime { get; set; } = DEFAULT_WAIT_FOR_MESSAGE_TO_BE_QUEUED_FOR_OUTBOUND_TIME;
+        public static readonly TimeSpan DEFAULT_WAIT_FOR_MESSAGE_TO_BE_QUEUED_FOR_OUTBOUND_TIME = TimeSpan.FromSeconds(2);
     }
 }

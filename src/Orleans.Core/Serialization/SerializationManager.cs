@@ -744,13 +744,20 @@ namespace Orleans.Serialization
             }
 
             IKeyedSerializer keyedSerializer;
-            if (this.TryLookupKeyedSerializer(t, out keyedSerializer))
+            if (this.TryLookupKeyedSerializer(t, fallback: false, out keyedSerializer))
             {
                 return keyedSerializer.DeepCopy(original, context);
             }
 
             if (fallbackSerializer.IsSupportedType(t))
+            {
                 return FallbackSerializationDeepCopy(original, context);
+            }
+
+            if (this.TryLookupKeyedSerializer(t, fallback: true, out keyedSerializer))
+            {
+                return keyedSerializer.DeepCopy(original, context);
+            }
 
             throw new OrleansException("No copier found for object of type " + t.OrleansTypeName() +
                 ". Perhaps you need to mark it [Serializable] or define a custom serializer for it?");
@@ -915,7 +922,7 @@ namespace Orleans.Serialization
                 return;
             }
 
-            if (sm.TryLookupKeyedSerializer(t, out var keyedSerializer))
+            if (sm.TryLookupKeyedSerializer(t, fallback: false, out var keyedSerializer))
             {
                 writer.Write((byte)SerializationTokenType.KeyedSerializer);
                 writer.Write((byte)keyedSerializer.SerializerId);
@@ -926,6 +933,14 @@ namespace Orleans.Serialization
             if (sm.fallbackSerializer.IsSupportedType(t))
             {
                 sm.FallbackSerializer(obj, context, expected);
+                return;
+            }
+
+            if (sm.TryLookupKeyedSerializer(t, fallback: true, out keyedSerializer))
+            {
+                writer.Write((byte)SerializationTokenType.KeyedSerializer);
+                writer.Write((byte)keyedSerializer.SerializerId);
+                keyedSerializer.Serialize(obj, context, expected);
                 return;
             }
 
@@ -1199,15 +1214,14 @@ namespace Orleans.Serialization
                 timer.Start();
                 context.SerializationManager.serializationStatistics.Deserializations.Increment();
             }
-            object result = null;
 
-            result = DeserializeInner(t, context);
-
+            var result = DeserializeInner(t, context);
             if (timer != null)
             {
                 timer.Stop();
                 context.SerializationManager.serializationStatistics.DeserTimeStatistic.IncrementBy(timer.ElapsedTicks);
             }
+
             return result;
         }
 
@@ -1293,7 +1307,9 @@ namespace Orleans.Serialization
                         throw new SerializationException($"Specified serializer {serializerId} not configured.");
                     }
 
-                    return keyedSerializer.Deserialize(expected, context);
+                    result = keyedSerializer.Deserialize(expected, context);
+                    context.RecordObject(result);
+                    return result;
                 }
                 else
                 {
@@ -1316,7 +1332,6 @@ namespace Orleans.Serialization
                 if (resultType.IsArray)
                 {
                     result = DeserializeArray(resultType, context);
-                    context.RecordObject(result);
                     return result;
                 }
 
@@ -1356,106 +1371,92 @@ namespace Orleans.Serialization
 
             int length1 = reader.ReadInt();
 
-            // Optimized special cases
-            if (rank == 1)
-            {
-                if (et.TypeHandle.Equals(byteTypeHandle))
-                    return reader.ReadBytes(length1);
-
-                if (et.TypeHandle.Equals(sbyteTypeHandle))
-                {
-                    var result = new sbyte[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(shortTypeHandle))
-                {
-                    var result = new short[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(intTypeHandle))
-                {
-                    var result = new int[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(longTypeHandle))
-                {
-                    var result = new long[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(ushortTypeHandle))
-                {
-                    var result = new ushort[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(uintTypeHandle))
-                {
-                    var result = new uint[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(ulongTypeHandle))
-                {
-                    var result = new ulong[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(doubleTypeHandle))
-                {
-                    var result = new double[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(floatTypeHandle))
-                {
-                    var result = new float[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(charTypeHandle))
-                {
-                    var result = new char[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-                if (et.TypeHandle.Equals(boolTypeHandle))
-                {
-                    var result = new bool[length1];
-                    var n = Buffer.ByteLength(result);
-                    reader.ReadBlockInto(result, n);
-                    return result;
-                }
-            }
-
-
-
             Array array;
 
             if (rank == 1)
             {
-                array = Array.CreateInstance(et, length1);
-                for (int i = 0; i < length1; i++)
-                    array.SetValue(DeserializeInner(et, context), i);
+                // Optimized special cases
+                if (et.TypeHandle.Equals(byteTypeHandle))
+                {
+                    array = reader.ReadBytes(length1);
+                    context.RecordObject(array);
+                }
+                else if (et.TypeHandle.Equals(sbyteTypeHandle))
+                {
+                    array = new sbyte[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(shortTypeHandle))
+                {
+                    array = new short[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(intTypeHandle))
+                {
+                    array = new int[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(longTypeHandle))
+                {
+                    array = new long[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(ushortTypeHandle))
+                {
+                    array = new ushort[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(uintTypeHandle))
+                {
+                    array = new uint[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(ulongTypeHandle))
+                {
+                    array = new ulong[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(doubleTypeHandle))
+                {
+                    array = new double[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(floatTypeHandle))
+                {
+                    array = new float[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(charTypeHandle))
+                {
+                    array = new char[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else if (et.TypeHandle.Equals(boolTypeHandle))
+                {
+                    array = new bool[length1];
+                    ReadPrimitiveArray(array, reader, context);
+                }
+                else
+                {
+                    array = Array.CreateInstance(et, length1);
+                    context.RecordObject(array);
+                    for (int i = 0; i < length1; i++)
+                        array.SetValue(DeserializeInner(et, context), i);
+                }
+
+                static void ReadPrimitiveArray(Array array, IBinaryTokenStreamReader reader, IDeserializationContext context)
+                {
+                    context.RecordObject(array);
+                    var n = Buffer.ByteLength(array);
+                    reader.ReadBlockInto(array, n);
+                }
             }
             else if (rank == 2)
             {
                 int length2 = reader.ReadInt();
 
                 array = Array.CreateInstance(et, length1, length2);
+                context.RecordObject(array);
 
                 for (int i = 0; i < length1; i++)
                     for (int j = 0; j < length2; j++)
@@ -1467,6 +1468,7 @@ namespace Orleans.Serialization
                 int length3 = reader.ReadInt();
 
                 array = Array.CreateInstance(et, length1, length2, length3);
+                context.RecordObject(array);
 
                 for (int i = 0; i < length1; i++)
                     for (int j = 0; j < length2; j++)
@@ -1475,8 +1477,6 @@ namespace Orleans.Serialization
             }
             else
             {
-
-
                 var lengths = new int[rank];
 
                 lengths[0] = length1;
@@ -1485,6 +1485,7 @@ namespace Orleans.Serialization
                     lengths[i] = reader.ReadInt();
 
                 array = Array.CreateInstance(et, lengths);
+                context.RecordObject(array);
 
                 var index = new int[rank];
                 var sizes = new int[rank];
@@ -1504,8 +1505,6 @@ namespace Orleans.Serialization
                     }
                     array.SetValue(DeserializeInner(et, context), index);
                 }
-
-
             }
 
             return array;
@@ -1544,6 +1543,14 @@ namespace Orleans.Serialization
             var context = new DeserializationContext(this);
             context.StreamReader = new BinaryTokenStreamReader(data);
             var result = DeserializeInner<T>(context);
+            return result;
+        }
+
+        public object DeserializeFromByteArray(byte[] data, Type expectedType)
+        {
+            var context = new DeserializationContext(this);
+            context.StreamReader = new BinaryTokenStreamReader(data);
+            var result = DeserializeInner(expectedType, context);
             return result;
         }
 
@@ -1626,7 +1633,7 @@ namespace Orleans.Serialization
             return serializer != null;
         }
 
-        private bool TryLookupKeyedSerializer(Type type, out IKeyedSerializer serializer)
+        private bool TryLookupKeyedSerializer(Type type, bool fallback, out IKeyedSerializer serializer)
         {
             if (this.orderedKeyedSerializers.Count == 0)
             {
@@ -1638,7 +1645,8 @@ namespace Orleans.Serialization
 
             foreach (var keyedSerializer in this.orderedKeyedSerializers)
             {
-                if (keyedSerializer.IsSupportedType(type))
+                var canUseSerializer = !keyedSerializer.IsFallbackOnly || fallback;
+                if (canUseSerializer && keyedSerializer.IsSupportedType(type))
                 {
                     this.typeToKeyedSerializer[type] = keyedSerializer;
                     serializer = keyedSerializer;
@@ -1709,9 +1717,7 @@ namespace Orleans.Serialization
                 }
                 else
                 {
-#pragma warning disable CS0618 // Type or member is obsolete
                     serializer = new ILBasedSerializer(serviceProvider.GetRequiredService<ITypeResolver>());
-#pragma warning restore CS0618 // Type or member is obsolete
                 }
             }
 
