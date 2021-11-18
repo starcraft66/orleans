@@ -58,11 +58,13 @@ namespace ServiceBus.Tests.StreamingTests
                         }));
                         b.ConfigureEventHub(ob => ob.Configure(options =>
                         {
-                            options.ConfigureEventHubConnection(TestDefaultConfiguration.EventHubConnectionString, EHPath, EHConsumerGroup);
+                            options.ConnectionString = TestDefaultConfiguration.EventHubConnectionString;
+                            options.ConsumerGroup = EHConsumerGroup;
+                            options.Path = EHPath;
                         }));
                         b.UseAzureTableCheckpointer(ob => ob.Configure(options =>
                         {
-                            options.ConfigureTableServiceClient(TestDefaultConfiguration.DataConnectionString);
+                            options.ConnectionString = TestDefaultConfiguration.DataConnectionString;
                             options.PersistInterval = TimeSpan.FromSeconds(10);
                         }));
                         b.UseDataAdapter((sp, n) => ActivatorUtilities.CreateInstance<CustomDataAdapter>(sp));
@@ -79,7 +81,9 @@ namespace ServiceBus.Tests.StreamingTests
                     {
                         b.ConfigureEventHub(ob => ob.Configure(options =>
                         {
-                            options.ConfigureEventHubConnection(TestDefaultConfiguration.EventHubConnectionString, EHPath, EHConsumerGroup);
+                            options.ConnectionString = TestDefaultConfiguration.EventHubConnectionString;
+                            options.ConsumerGroup = EHConsumerGroup;
+                            options.Path = EHPath;
                         }));
                         b.UseDataAdapter((sp, n) => ActivatorUtilities.CreateInstance<CustomDataAdapter>(sp));
                     });

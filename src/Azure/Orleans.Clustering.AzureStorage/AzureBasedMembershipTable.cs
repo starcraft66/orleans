@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Azure;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans.AzureUtils;
@@ -36,7 +36,7 @@ namespace Orleans.Runtime.MembershipService
 
         public async Task InitializeMembershipTable(bool tryInitTableVersion)
         {
-            LogFormatter.SetExceptionDecoder(typeof(RequestFailedException), AzureTableUtils.PrintStorageException);
+            LogFormatter.SetExceptionDecoder(typeof(StorageException), AzureTableUtils.PrintStorageException);
 
             this.tableManager = await OrleansSiloInstanceManager.GetManager(
                 this.clusterId,
@@ -161,7 +161,7 @@ namespace Orleans.Runtime.MembershipService
             }
         }
 
-        private MembershipTableData Convert(List<(SiloInstanceTableEntry Entity, string ETag)> entries)
+        private MembershipTableData Convert(List<Tuple<SiloInstanceTableEntry, string>> entries)
         {
             try
             {
@@ -169,10 +169,10 @@ namespace Orleans.Runtime.MembershipService
                 TableVersion tableVersion = null;
                 foreach (var tuple in entries)
                 {
-                    var tableEntry = tuple.Entity;
+                    var tableEntry = tuple.Item1;
                     if (tableEntry.RowKey.Equals(SiloInstanceTableEntry.TABLE_VERSION_ROW))
                     {
-                        tableVersion = new TableVersion(int.Parse(tableEntry.MembershipVersion), tuple.ETag);
+                        tableVersion = new TableVersion(Int32.Parse(tableEntry.MembershipVersion), tuple.Item2);
                     }
                     else
                     {
@@ -180,7 +180,7 @@ namespace Orleans.Runtime.MembershipService
                         {
                             
                             MembershipEntry membershipEntry = Parse(tableEntry);
-                            memEntries.Add(new Tuple<MembershipEntry, string>(membershipEntry, tuple.ETag));
+                            memEntries.Add(new Tuple<MembershipEntry, string>(membershipEntry, tuple.Item2));
                         }
                         catch (Exception exc)
                         {
@@ -195,7 +195,7 @@ namespace Orleans.Runtime.MembershipService
             catch (Exception exc)
             {
                 logger.Error((int)TableStorageErrorCode.AzureTable_60,
-                    $"Intermediate error parsing SiloInstanceTableEntry to MembershipTableData: {Utils.EnumerableToString(entries, tuple => tuple.Entity.ToString())}.", exc);
+                    $"Intermediate error parsing SiloInstanceTableEntry to MembershipTableData: {Utils.EnumerableToString(entries, tuple => tuple.Item1.ToString())}.", exc);
                 throw;
             }
         }

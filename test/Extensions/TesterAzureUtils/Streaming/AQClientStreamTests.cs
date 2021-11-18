@@ -96,7 +96,7 @@ namespace Tester.AzureUtils.Streaming
         {
             logger.Info("************************ AQStreamConsumerOnDroppedClientTest *********************************");
             await runner.StreamConsumerOnDroppedClientTest(AQStreamProviderName, StreamNamespace, output,
-                    () => TestAzureTableStorageStreamFailureHandler.GetDeliveryFailureCount(AQStreamProviderName));
+                    () => TestAzureTableStorageStreamFailureHandler.GetDeliveryFailureCount(AQStreamProviderName, NullLoggerFactory.Instance));
         }
     }
 }

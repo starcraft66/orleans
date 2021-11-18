@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Azure.Cosmos.Table;
 using TestExtensions;
 using Xunit;
 
@@ -8,7 +9,7 @@ namespace Tester.AzureUtils
     {
         public static void EnsureEmulatorIsNotUsed()
         {
-            if (TestDefaultConfiguration.DataConnectionString is { Length: > 0 } connectionString && connectionString.IndexOf("UseDevelopmentStorage", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (CloudStorageAccount.DevelopmentStorageAccount.ToString().Equals(TestDefaultConfiguration.DataConnectionString, StringComparison.OrdinalIgnoreCase))
             {
                 throw new SkipException("This test does not support the storage emulator.");
             }

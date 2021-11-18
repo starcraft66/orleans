@@ -6,15 +6,16 @@ namespace ServiceBus.Tests
 {
     public static class EventHubConfigurationExtensions
     {
-        public static EventHubOptions ConfigureTestDefaults(this EventHubOptions options, string eventHubName, string consumerGroup)
+        public static EventHubOptions ConfigureTestDefaults(this EventHubOptions options)
         {
             if (TestDefaultConfiguration.UseAadAuthentication)
             {
-                options.ConfigureEventHubConnection(TestDefaultConfiguration.EventHubFullyQualifiedNamespace, eventHubName, consumerGroup, new DefaultAzureCredential());
+                options.FullyQualifiedNamespace = TestDefaultConfiguration.EventHubFullyQualifiedNamespace;
+                options.TokenCredential = new DefaultAzureCredential();
             }
             else
             {
-                options.ConfigureEventHubConnection(TestDefaultConfiguration.EventHubConnectionString, eventHubName, consumerGroup);
+                options.ConnectionString = TestDefaultConfiguration.EventHubConnectionString;
             }
 
             return options;

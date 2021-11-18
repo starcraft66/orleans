@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Azure;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans.AzureUtils.Utilities;
@@ -41,14 +40,14 @@ namespace Orleans.Runtime.ReminderService
                 options: this.storageOptions);
         }
 
-        private ReminderTableData ConvertFromTableEntryList(List<(ReminderTableEntry Entity, string ETag)> entries)
+        private ReminderTableData ConvertFromTableEntryList(IEnumerable<Tuple<ReminderTableEntry, string>> entries)
         {
             var remEntries = new List<ReminderEntry>();
             foreach (var entry in entries)
             {
                 try
                 {
-                    ReminderEntry converted = ConvertFromTableEntry(entry.Entity, entry.ETag);
+                    ReminderEntry converted = ConvertFromTableEntry(entry.Item1, entry.Item2);
                     remEntries.Add(converted);
                 }
                 catch (Exception)
@@ -113,7 +112,7 @@ namespace Orleans.Runtime.ReminderService
                 Period = remEntry.Period.ToString(),
 
                 GrainRefConsistentHash = string.Format("{0:X8}", consistentHash),
-                ETag = new ETag(remEntry.ETag),
+                ETag = remEntry.ETag,
             };
         }
 
@@ -162,7 +161,7 @@ namespace Orleans.Runtime.ReminderService
             {
                 if (this.logger.IsEnabled(LogLevel.Debug)) this.logger.Debug("ReadRow grainRef = {0} reminderName = {1}", grainRef, reminderName);
                 var result = await this.remTableManager.FindReminderEntry(grainRef, reminderName);
-                return result.Entity is null ? null : ConvertFromTableEntry(result.Entity, result.ETag);
+                return result == null ? null : ConvertFromTableEntry(result.Item1, result.Item2);
             }
             catch (Exception exc)
             {
@@ -201,7 +200,7 @@ namespace Orleans.Runtime.ReminderService
             {
                 PartitionKey = ReminderTableEntry.ConstructPartitionKey(this.remTableManager.ServiceId, grainRef),
                 RowKey = ReminderTableEntry.ConstructRowKey(grainRef, reminderName),
-                ETag = new ETag(eTag),
+                ETag = eTag,
             };
             try
             {

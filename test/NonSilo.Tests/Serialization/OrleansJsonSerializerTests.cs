@@ -10,8 +10,7 @@ using Xunit;
 namespace UnitTests.Serialization
 {
     using System.Text;
-    using FluentAssertions.Common;
-    using Microsoft.Extensions.Hosting;
+
     using Newtonsoft.Json;
 
     using Orleans.Serialization;

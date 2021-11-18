@@ -38,12 +38,14 @@ namespace ServiceBus.Tests.StreamingTests
                         {
                             b.ConfigureEventHub(ob => ob.Configure(options =>
                             {
-                                options.ConfigureTestDefaults(EHPath, EHConsumerGroup);
+                                options.ConfigureTestDefaults();
+                                options.ConsumerGroup = EHConsumerGroup;
+                                options.Path = EHPath;
 
                             }));
                             b.UseAzureTableCheckpointer(ob => ob.Configure(options =>
                             {
-                                options.ConfigureTableServiceClient(TestDefaultConfiguration.DataConnectionString);
+                                options.ConnectionString = TestDefaultConfiguration.DataConnectionString;
                                 options.PersistInterval = TimeSpan.FromSeconds(1);
                             }));
                             b.UseDynamicClusterConfigDeploymentBalancer();

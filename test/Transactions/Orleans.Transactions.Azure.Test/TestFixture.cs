@@ -31,7 +31,7 @@ namespace Orleans.Transactions.AzureStorage.Tests
                     .ConfigureTracingForTransactionTests()
                     .AddAzureTableTransactionalStateStorage(TransactionTestConstants.TransactionStore, options =>
                     {
-                        options.ConfigureTableServiceClient(TestDefaultConfiguration.DataConnectionString);
+                        options.ConnectionString = TestDefaultConfiguration.DataConnectionString;
                     })
                     .UseTransactions();
             }
@@ -59,7 +59,7 @@ namespace Orleans.Transactions.AzureStorage.Tests
                     .ConfigureTracingForTransactionTests()
                     .AddFaultInjectionAzureTableTransactionalStateStorage(TransactionTestConstants.TransactionStore, options =>
                     {
-                        options.ConfigureTableServiceClient(TestDefaultConfiguration.DataConnectionString);
+                        options.ConnectionString = TestDefaultConfiguration.DataConnectionString;
                     })
                     .UseControlledFaultInjectionTransactionState()
                     .UseTransactions()
@@ -99,7 +99,7 @@ namespace Orleans.Transactions.AzureStorage.Tests
                     .ConfigureTracingForTransactionTests()
                     .AddFaultInjectionAzureTableTransactionalStateStorage(TransactionTestConstants.TransactionStore, options =>
                     {
-                        options.ConfigureTableServiceClient(TestDefaultConfiguration.DataConnectionString);
+                        options.ConnectionString = TestDefaultConfiguration.DataConnectionString;
                     })
                     .UseTransactions()
                     .ConfigureServices(services => services.AddSingleton<ITransactionFaultInjector>(sp => new RandomErrorInjector(probability)));

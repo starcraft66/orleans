@@ -1,17 +1,11 @@
-using System;
-using Azure;
-using Azure.Data.Tables;
+using Microsoft.Azure.Cosmos.Table;
 using Orleans.Streaming.EventHubs;
 
 namespace Orleans.ServiceBus.Providers
 {
-    internal class EventHubPartitionCheckpointEntity : ITableEntity
+    internal class EventHubPartitionCheckpointEntity : TableEntity
     {
         public string Offset { get; set; }
-        public string PartitionKey { get; set; }
-        public string RowKey { get; set; }
-        public DateTimeOffset? Timestamp { get; set; }
-        public ETag ETag { get; set; }
 
         public EventHubPartitionCheckpointEntity()
         {

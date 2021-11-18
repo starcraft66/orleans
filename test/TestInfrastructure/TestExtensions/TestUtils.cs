@@ -22,7 +22,7 @@ namespace Tester
 
         public static void CheckForAzureStorage()
         {
-            if ((UseAadAuthentication && (TableEndpoint == null)) ||
+            if ((UseAadAuthentication && (TableEndpoint == null || string.IsNullOrWhiteSpace(TableResourceId))) ||
                 (!UseAadAuthentication && string.IsNullOrWhiteSpace(DataConnectionString)))
             {
                 throw new SkipException("No connection string found. Skipping");

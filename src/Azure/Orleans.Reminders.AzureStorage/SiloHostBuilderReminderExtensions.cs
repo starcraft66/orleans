@@ -22,6 +22,60 @@ namespace Orleans.Hosting
         /// The delegate used to configure the reminder store.
         /// </param>
         /// <returns>
+        /// The provided <see cref="ISiloHostBuilder"/>, for chaining.
+        /// </returns>
+        public static ISiloHostBuilder UseAzureTableReminderService(this ISiloHostBuilder builder, Action<AzureTableReminderStorageOptions> configure)
+        {
+            builder.ConfigureServices(services => services.UseAzureTableReminderService(configure));
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds reminder storage backed by Azure Table Storage.
+        /// </summary>
+        /// <param name="builder">
+        /// The builder.
+        /// </param>
+        /// <param name="configureOptions">
+        /// The configuration delegate.
+        /// </param>
+        /// <returns>
+        /// The provided <see cref="ISiloHostBuilder"/>, for chaining.
+        /// </returns>
+        public static ISiloHostBuilder UseAzureTableReminderService(this ISiloHostBuilder builder, Action<OptionsBuilder<AzureTableReminderStorageOptions>> configureOptions)
+        {
+            builder.ConfigureServices(services => services.UseAzureTableReminderService(configureOptions));
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds reminder storage backed by Azure Table Storage.
+        /// </summary>
+        /// <param name="builder">
+        /// The builder.
+        /// </param>
+        /// <param name="connectionString">
+        /// The storage connection string.
+        /// </param>
+        /// <returns>
+        /// The provided <see cref="ISiloHostBuilder"/>, for chaining.
+        /// </returns>
+        public static ISiloHostBuilder UseAzureTableReminderService(this ISiloHostBuilder builder, string connectionString)
+        {
+            builder.UseAzureTableReminderService(options => options.ConnectionString = connectionString);
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds reminder storage backed by Azure Table Storage.
+        /// </summary>
+        /// <param name="builder">
+        /// The builder.
+        /// </param>
+        /// <param name="configure">
+        /// The delegate used to configure the reminder store.
+        /// </param>
+        /// <returns>
         /// The provided <see cref="ISiloBuilder"/>, for chaining.
         /// </returns>
         public static ISiloBuilder UseAzureTableReminderService(this ISiloBuilder builder, Action<AzureTableReminderStorageOptions> configure)
@@ -62,7 +116,7 @@ namespace Orleans.Hosting
         /// </returns>
         public static ISiloBuilder UseAzureTableReminderService(this ISiloBuilder builder, string connectionString)
         {
-            builder.UseAzureTableReminderService(options => options.ConfigureTableServiceClient(connectionString));
+            builder.UseAzureTableReminderService(options => options.ConnectionString = connectionString);
             return builder;
         }
 
@@ -116,11 +170,11 @@ namespace Orleans.Hosting
         /// The storage connection string.
         /// </param>
         /// <returns>
-        /// The provided <see cref="IServiceCollection"/>, for chaining.
+        /// The provided <see cref="ISiloHostBuilder"/>, for chaining.
         /// </returns>
         public static IServiceCollection UseAzureTableReminderService(this IServiceCollection services, string connectionString)
         {
-            services.UseAzureTableReminderService(options => options.ConfigureTableServiceClient(connectionString));
+            services.UseAzureTableReminderService(options => options.ConnectionString = connectionString);
             return services;
         }
     }

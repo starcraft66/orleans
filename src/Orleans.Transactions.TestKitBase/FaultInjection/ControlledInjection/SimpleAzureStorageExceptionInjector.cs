@@ -1,6 +1,4 @@
-using System;
-using System.Runtime.Serialization;
-using Azure;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
 
 namespace Orleans.Transactions.TestKit
@@ -23,9 +21,8 @@ namespace Orleans.Transactions.TestKit
             {
                 InjectAfterStore = false;
                 this.injectionAfterStoreCounter++;
-                var message = $"Storage exception thrown after store, thrown total {injectionAfterStoreCounter}";
-                this.logger.LogInformation(message);
-                throw new SimpleAzureStorageException(message);
+                this.logger.LogInformation($"Storage exception thrown after store, thrown total {injectionAfterStoreCounter}");
+                throw new SimpleAzureStorageException();
             }
         }
 
@@ -35,37 +32,13 @@ namespace Orleans.Transactions.TestKit
             {
                 InjectBeforeStore = false;
                 this.injectionBeforeStoreCounter++;
-                var message = $"Storage exception thrown before store. Thrown total {injectionBeforeStoreCounter}";
-                this.logger.LogInformation(message);
-                throw new SimpleAzureStorageException(message);
+                this.logger.LogInformation($"Storage exception thrown before store. Thrown total {injectionBeforeStoreCounter}");
+                throw new SimpleAzureStorageException();
             }
         }
     }
 
-    public class SimpleAzureStorageException : RequestFailedException
+    public class SimpleAzureStorageException : StorageException
     {
-        public SimpleAzureStorageException(string message) : base(message)
-        {
-        }
-
-        public SimpleAzureStorageException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        public SimpleAzureStorageException(int status, string message) : base(status, message)
-        {
-        }
-
-        public SimpleAzureStorageException(int status, string message, Exception innerException) : base(status, message, innerException)
-        {
-        }
-
-        public SimpleAzureStorageException(int status, string message, string errorCode, Exception innerException) : base(status, message, errorCode, innerException)
-        {
-        }
-
-        protected SimpleAzureStorageException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
     }
 }

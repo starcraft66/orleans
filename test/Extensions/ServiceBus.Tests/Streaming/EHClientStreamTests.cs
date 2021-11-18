@@ -58,13 +58,15 @@ namespace ServiceBus.Tests.StreamingTests
                         b.Configure<SiloMessagingOptions>(ob => ob.Configure(options => options.ClientDropTimeout = TimeSpan.FromSeconds(5)));
                         b.Configure<EventHubOptions>(ob => ob.Configure(options =>
                         {
-                            options.ConfigureTestDefaults(EHPath, EHConsumerGroup);
+                            options.ConfigureTestDefaults();
+                            options.ConsumerGroup = EHConsumerGroup;
+                            options.Path = EHPath;
                         }));
                         b.ConfigureComponent<AzureTableStreamCheckpointerOptions, IStreamQueueCheckpointerFactory>(
                             EventHubCheckpointerFactory.CreateFactory,
                             ob => ob.Configure(options =>
                             {
-                                options.ConfigureTableServiceClient(TestDefaultConfiguration.DataConnectionString);
+                                options.ConnectionString = TestDefaultConfiguration.DataConnectionString;
                                 options.PersistInterval = TimeSpan.FromSeconds(10);
                             }));
                     })
@@ -81,7 +83,9 @@ namespace ServiceBus.Tests.StreamingTests
                     .AddPersistentStreams(StreamProviderName, TestEventHubStreamAdapterFactory.Create, b=>b
                         .Configure<EventHubOptions>(ob=>ob.Configure(options =>
                         {
-                            options.ConfigureTestDefaults(EHPath, EHConsumerGroup);
+                            options.ConfigureTestDefaults();
+                            options.ConsumerGroup = EHConsumerGroup;
+                            options.Path = EHPath;
                         })))
                     .ConfigureServices(services => services.TryAddSingleton<IEventHubDataAdapter, EventHubDataAdapter>());
             }
@@ -99,7 +103,7 @@ namespace ServiceBus.Tests.StreamingTests
         {
             logger.Info("************************ EHStreamConsumerOnDroppedClientTest *********************************");
             await runner.StreamConsumerOnDroppedClientTest(StreamProviderName, StreamNamespace, output,
-                    () => TestAzureTableStorageStreamFailureHandler.GetDeliveryFailureCount(StreamProviderName), true);
+                    () => TestAzureTableStorageStreamFailureHandler.GetDeliveryFailureCount(StreamProviderName, NullLoggerFactory.Instance), true);
         }
     }
 }

@@ -25,8 +25,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="$(AzureCoreVersion)" />
-    <PackageReference Include="Azure.Data.Tables" Version="$(AzureDataTablesVersion)" />
-    <PackageReference Include="System.Net.NameResolution" Version="$(SystemNetNameResolutionVersion)" />
+    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="$(MicrosoftAzureCosmosTableVersion)" />
   </ItemGroup>
 
   <ItemGroup>

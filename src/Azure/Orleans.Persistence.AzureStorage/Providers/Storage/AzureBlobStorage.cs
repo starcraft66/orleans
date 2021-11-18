@@ -12,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Orleans.Configuration;
-using Orleans.Persistence.AzureStorage;
 using Orleans.Providers.Azure;
 using Orleans.Runtime;
 using Orleans.Runtime.Configuration;
@@ -152,8 +151,8 @@ namespace Orleans.Storage
 
                 var blob = container.GetBlobClient(blobName);
 
-                var conditions = string.IsNullOrEmpty(grainState.ETag)
-                    ? new BlobRequestConditions { IfNoneMatch = ETag.All }
+                var conditions = grainState.ETag == null
+                    ? new BlobRequestConditions { IfNoneMatch = new ETag("*") }
                     : new BlobRequestConditions { IfMatch = new ETag(grainState.ETag) };
 
                 await DoOptimisticUpdate(() => blob.DeleteIfExistsAsync(DeleteSnapshotsOption.None, conditions: conditions),
@@ -182,8 +181,8 @@ namespace Orleans.Storage
         {
             try
             {
-                var conditions = string.IsNullOrEmpty(grainState.ETag)
-                    ? new BlobRequestConditions { IfNoneMatch = ETag.All }
+                var conditions = grainState.ETag == null
+                    ? new BlobRequestConditions { IfNoneMatch = new ETag("*") }
                     : new BlobRequestConditions { IfMatch = new ETag(grainState.ETag) };
 
                 using var stream = new MemoryStream(contents);
@@ -229,17 +228,13 @@ namespace Orleans.Storage
 
             try
             {
-                this.logger.LogInformation((int)AzureProviderErrorCode.AzureTableProvider_InitProvider, $"AzureBlobGrainStorage initializing: {this.options.ToString()}");
+                this.logger.LogInformation((int)AzureProviderErrorCode.AzureTableProvider_InitProvider, $"AzureTableGrainStorage initializing: {this.options.ToString()}");
+                this.logger.LogInformation((int)AzureProviderErrorCode.AzureTableProvider_ParamConnectionString, "AzureTableGrainStorage is using DataConnectionString: {0}", ConfigUtilities.RedactConnectionStringInfo(this.options.ConnectionString));
                 this.jsonSettings = OrleansJsonSerializer.UpdateSerializerSettings(OrleansJsonSerializer.GetDefaultSerializerSettings(this.typeResolver, this.grainFactory), this.options.UseFullAssemblyNames, this.options.IndentJson, this.options.TypeNameHandling);
 
                 this.options.ConfigureJsonSerializerSettings?.Invoke(this.jsonSettings);
 
-                if (options.CreateClient is not { } createClient)
-                {
-                    throw new OrleansConfigurationException($"No credentials specified. Use the {options.GetType().Name}.{nameof(AzureBlobStorageOptions.ConfigureBlobServiceClient)} method to configure the Azure Blob Service client.");
-                }
-
-                var client = await createClient();
+                var client = this.options.ServiceUri != null ? new BlobServiceClient(this.options.ServiceUri, this.options.TokenCredential) : new BlobServiceClient(this.options.ConnectionString);
                 container = client.GetBlobContainerClient(this.options.ContainerName);
                 await container.CreateIfNotExistsAsync().ConfigureAwait(false);
                 stopWatch.Stop();

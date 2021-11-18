@@ -1,22 +1,18 @@
 using System;
 using System.Text;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
 using Orleans.Internal;
 using Orleans.Clustering.AzureStorage;
 using Microsoft.Extensions.Logging.Abstractions;
-using Azure.Data.Tables;
-using Azure;
 
 namespace Tester.AzureUtils
 {
-    public class UnitTestAzureTableData : ITableEntity
+    [Serializable]
+    public class UnitTestAzureTableData : TableEntity
     {
         public byte[] Data { get; set; }
         public string StringData { get; set; }
-        public string PartitionKey { get; set; }
-        public string RowKey { get; set; }
-        public DateTimeOffset? Timestamp { get; set; }
-        public ETag ETag { get; set; }
 
         public UnitTestAzureTableData()
         {

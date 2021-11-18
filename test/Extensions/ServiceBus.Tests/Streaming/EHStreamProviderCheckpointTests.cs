@@ -45,7 +45,7 @@ namespace ServiceBus.Tests.StreamingTests
                         ImplicitSubscription_RecoverableStream_CollectorGrain.StorageProviderName,
                         (AzureBlobStorageOptions options) =>
                         {
-                            options.ConfigureBlobServiceClient(TestDefaultConfiguration.DataConnectionString);
+                            options.ConnectionString = TestDefaultConfiguration.DataConnectionString;
                         })
                     .AddEventHubStreams(StreamProviderName, b=>
                     {
@@ -54,13 +54,14 @@ namespace ServiceBus.Tests.StreamingTests
                         b.ConfigureEventHub(ob => ob.Configure(
                             options =>
                             {
-                                options.ConfigureTestDefaults(EHPath, EHConsumerGroup);
+                                options.ConfigureTestDefaults();
+                                options.ConsumerGroup = EHConsumerGroup;
+                                options.Path = EHPath;
 
                             }));
-
                         b.UseAzureTableCheckpointer(ob => ob.Configure(options =>
                         {
-                            options.ConfigureTableServiceClient(TestDefaultConfiguration.DataConnectionString);
+                            options.ConnectionString = TestDefaultConfiguration.DataConnectionString;
                             options.PersistInterval = TimeSpan.FromSeconds(1);
                         }));
                     });
@@ -76,7 +77,9 @@ namespace ServiceBus.Tests.StreamingTests
                     {
                         b.ConfigureEventHub(ob => ob.Configure(options =>
                         {
-                            options.ConfigureTestDefaults(EHPath, EHConsumerGroup);
+                            options.ConfigureTestDefaults();
+                            options.ConsumerGroup = EHConsumerGroup;
+                            options.Path = EHPath;
                         }));
                         b.ConfigureStreamPubSub(StreamPubSubType.ImplicitOnly);
                     });

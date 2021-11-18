@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageId>Microsoft.Orleans.Reminders.AzureStorage</PackageId>
     <Title>Microsoft Orleans Reminders Azure Table Storage</Title>
@@ -24,7 +24,11 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="$(AzureCoreVersion)" />
-    <PackageReference Include="Azure.Data.Tables" Version="$(AzureDataTablesVersion)" />
-    <PackageReference Include="System.Net.NameResolution" Version="$(SystemNetNameResolutionVersion)" />
+    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="$(MicrosoftAzureCosmosTableVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Storage\" />
+    <Folder Include="Utilities\" />
   </ItemGroup>
 </Project>

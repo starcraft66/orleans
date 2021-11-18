@@ -1,10 +1,8 @@
-using System;
-using Azure;
-using Azure.Data.Tables;
+using Microsoft.Azure.Cosmos.Table;
 
 namespace Orleans.Transactions.AzureStorage
 {
-    internal class KeyEntity : ITableEntity
+    internal class KeyEntity : TableEntity
     {
         public const string RK = "k";
 
@@ -15,9 +13,5 @@ namespace Orleans.Transactions.AzureStorage
 
         public long CommittedSequenceId { get; set; }
         public string Metadata { get; set; }
-        public string PartitionKey { get; set; }
-        public string RowKey { get; set; }
-        public DateTimeOffset? Timestamp { get; set; }
-        public ETag ETag { get; set; }
     }
 }
